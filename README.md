@@ -1,4 +1,4 @@
-# Employee-Attrition-Prediction-and-Analysis
+# Employee-Attrition-Prediction
 
 ## Project Overview
 This project aims to predict employee attrition and analyze factors affecting employee retention. Using a dataset with various employee attributes, we apply machine learning techniques to forecast the number of years an employee stays at the company. The goal is to provide insights into employee retention strategies and improve overall workforce management.
