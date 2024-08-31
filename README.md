@@ -27,3 +27,6 @@ This project aims to predict employee attrition and analyze factors affecting em
 - `YearsInMostRecentRole`: Years in the most recent role
 - `YearsSinceLastPromotion`: Years since the last promotion
 - `YearsWithCurrManager`: Years with the current manager
+
+**Source:**
+Kaggle - https://www.kaggle.com/datasets/mahmoudemadabdallah/hr-analytics-employee-attrition-and-performance?select=Employee.csv
