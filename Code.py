@@ -1,70 +1,60 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+import matplotlib.pyplot as plt
 
-# Load the data from GitHub raw URL
+# Load data
 url = 'https://raw.githubusercontent.com/jaivrma/Employee-Attrition-Prediction-and-Analysis/main/Employee.csv'
-df = pd.read_csv(url, low_memory=False)
-
-# Quick overview of the dataset
-print(df.head())
-print(df.info())
-print(df.describe())
-print(df.columns)
+df = pd.read_csv(url)
 
 # Drop irrelevant columns
-df = df.drop(['EmployeeID', 'FirstName', 'LastName', 'HireDate'], axis=1, errors='ignore')
+df = df.drop(['EmployeeID', 'FirstName', 'LastName', 'HireDate'], axis=1)
 
-# Convert categorical variables to dummy/indicator variables
+# Convert 'Attrition' column to 1/0 (it will not be affected by pd.get_dummies())
+df['Attrition'] = df['Attrition'].map({'Yes': 1, 'No': 0})
+
+# Convert categorical columns (excluding 'Attrition') to dummy variables
 df = pd.get_dummies(df, drop_first=True)
 
-# Define features and target (predicting 'YearsAtCompany')
-X = df.drop('YearsAtCompany', axis=1)
-y = df['YearsAtCompany']
+# Define features and target
+X = df.drop('Attrition', axis=1)
+y = df['Attrition']  # 'Attrition' is already in 1/0 format
 
-# Split the data into training and testing sets
+# Train-test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-# Create a pipeline with StandardScaler and LinearRegression
-pipeline = Pipeline([
-    ('scaler', StandardScaler()),
-    ('linreg', LinearRegression())
-])
+# Train logistic regression model
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
 
-# Train the model
-pipeline.fit(X_train, y_train)
+# Predict
+y_pred = model.predict(X_test)
 
-# Make predictions
-y_pred = pipeline.predict(X_test)
+# Accuracy
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
 
-# Evaluate the model
-mse = mean_squared_error(y_test, y_pred)
-r_squared = r2_score(y_test, y_pred)
+# Get coefficients and corresponding feature names
+coefficients = model.coef_[0]
+feature_names = X.columns
 
-print(f'Mean Squared Error (MSE): {mse:.2f}')
-print(f'R-squared (coefficient of determination): {r_squared:.2f}')
+# Combine into a DataFrame
+importance_df = pd.DataFrame({
+    'Feature': feature_names,
+    'Coefficient': coefficients
+})
 
-# Plotting the regression plot
-plt.scatter(y_test, y_pred, color='blue', alpha=0.5)
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
-plt.xlabel('Actual YearsAtCompany')
-plt.ylabel('Predicted YearsAtCompany')
-plt.title('Regression Plot: Actual vs Predicted YearsAtCompany')
-plt.show()
+# Sort by absolute coefficient value (to show strongest impact)
+importance_df = importance_df.sort_values(by='Coefficient', ascending=False)
 
-# Calculate residuals
-residuals = y_test - y_pred
+# Select top 10
+top_features = importance_df.head(10)
 
-# Plot the residuals
-plt.figure(figsize=(10, 6))
-sns.residplot(x=y_pred, y=residuals, lowess=True, line_kws={'color': 'red', 'lw': 2})
-plt.xlabel('Predicted Values')
-plt.ylabel('Residuals')
-plt.title('Residual Plot')
-plt.axhline(y=0, color='black', linestyle='--', lw=2)
+# Plot
+plt.barh(top_features['Feature'], top_features['Coefficient'])
+plt.gca().invert_yaxis()
+plt.title("Top Factors Contributing to Attrition")
+plt.xlabel("Coefficient Value")
+plt.tight_layout()
 plt.show()
